@@ -3,40 +3,48 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Escola Offline PRO</title>
+<title>Escola Offline PRO + Professor</title>
 
 <style>
 body{margin:0;font-family:Arial;background:#f1f3f6}
-header{background:#1e293b;color:white;padding:15px;text-align:center}
+header{background:#111827;color:#fff;padding:15px;text-align:center}
 .container{display:flex;height:100vh}
-.sidebar{width:220px;background:#0f172a;color:white;padding:10px}
-.sidebar button{width:100%;padding:10px;margin:5px 0;border:none;background:#1e293b;color:white;cursor:pointer}
+.sidebar{width:240px;background:#1f2937;color:white;padding:10px}
+.sidebar button{width:100%;padding:10px;margin:5px 0;border:none;background:#374151;color:white;cursor:pointer}
 .main{flex:1;padding:20px;overflow:auto}
-.card{background:white;padding:15px;margin:10px 0;border-radius:10px;box-shadow:0 2px 5px rgba(0,0,0,0.1)}
+.card{background:white;padding:15px;margin:10px 0;border-radius:10px}
 .hidden{display:none}
 input{padding:10px;width:100%;margin:5px 0}
-button.action{background:#2563eb;color:white;border:none;padding:10px;margin-top:10px}
+button.action{background:#2563eb;color:white;border:none;padding:10px}
 </style>
 </head>
 <body>
+
 <header><h1>📚 Escola Offline PRO</h1></header>
 
 <div class="container">
-
 <div class="sidebar">
-<button onclick="show('home')">🏠 Início</button>
+<button onclick="show('loginAluno')">👨‍🎓 Aluno</button>
+<button onclick="show('loginProf')">👨‍🏫 Professor</button>
 <button onclick="show('disciplinas')">📘 Disciplinas</button>
 <button onclick="show('quiz')">📝 Exercícios</button>
-<button onclick="show('relatorios')">📊 Relatórios</button>
+<button onclick="show('painelProf')">📊 Painel Professor</button>
 </div>
 
 <div class="main">
 
-<section id="home">
-<h2>Login</h2>
-<input id="nome" placeholder="Nome do aluno">
-<button class="action" onclick="login()">Entrar</button>
-<p id="user"></p>
+<section id="loginAluno">
+<h2>Login Aluno</h2>
+<input id="nomeAluno" placeholder="Nome do aluno">
+<button class="action" onclick="loginAluno()">Entrar</button>
+<p id="userAluno"></p>
+</section>
+
+<section id="loginProf" class="hidden">
+<h2>Login Professor</h2>
+<input id="senhaProf" placeholder="Senha">
+<button class="action" onclick="loginProf()">Entrar</button>
+<p id="statusProf"></p>
 </section>
 
 <section id="disciplinas" class="hidden">
@@ -50,8 +58,8 @@ button.action{background:#2563eb;color:white;border:none;padding:10px;margin-top
 <div id="quizBox"></div>
 </section>
 
-<section id="relatorios" class="hidden">
-<h2>Relatórios</h2>
+<section id="painelProf" class="hidden">
+<h2>Painel do Professor</h2>
 <div id="relatorio"></div>
 </section>
 
@@ -59,13 +67,13 @@ button.action{background:#2563eb;color:white;border:none;padding:10px;margin-top
 </div>
 
 <script>
-// NAVEGAÇÃO
+// NAV
 function show(id){
  document.querySelectorAll('section').forEach(s=>s.classList.add('hidden'));
  document.getElementById(id).classList.remove('hidden');
 }
 
-// DATABASE
+// DB
 let db;
 const req=indexedDB.open('EscolaPRO',1);
 req.onupgradeneeded=e=>{
@@ -88,14 +96,27 @@ function listarResultados(cb){
  r.onsuccess=()=>cb(r.result);
 }
 
-// LOGIN
+// LOGIN ALUNO
 let alunoAtual=null;
-function login(){
- let nome=document.getElementById('nome').value;
- if(!nome) return alert('Digite um nome');
+function loginAluno(){
+ let nome=document.getElementById('nomeAluno').value;
  alunoAtual=nome;
  salvarAluno(nome);
- document.getElementById('user').innerText='Aluno: '+nome;
+ document.getElementById('userAluno').innerText='Aluno: '+nome;
+}
+
+// LOGIN PROFESSOR
+let profLogado=false;
+function loginProf(){
+ let senha=document.getElementById('senhaProf').value;
+ if(senha==='1234'){
+  profLogado=true;
+  document.getElementById('statusProf').innerText='Acesso permitido';
+  show('painelProf');
+  gerarRelatorio();
+ }else{
+  document.getElementById('statusProf').innerText='Senha incorreta';
+ }
 }
 
 // DISCIPLINAS
@@ -125,7 +146,6 @@ function mostrarAulas(nome){
   div.appendChild(el);
  });
 }
-
 carregarDisciplinas();
 
 // QUIZ
@@ -141,7 +161,6 @@ function loadQuiz(){
  if(i>=quiz.length){
   salvarResultado({aluno:alunoAtual,score});
   box.innerHTML=`<h3>Pontuação: ${score}</h3>`;
-  gerarRelatorio();
   return;
  }
  let q=quiz[i];
@@ -155,32 +174,21 @@ function loadQuiz(){
 }
 loadQuiz();
 
-// RELATÓRIOS
+// RELATÓRIO PROFESSOR
 function gerarRelatorio(){
  listarResultados(dados=>{
   let div=document.getElementById('relatorio');
   div.innerHTML='';
-
-  let total=0;
   dados.forEach(r=>{
-   total+=r.score;
    let el=document.createElement('div');
    el.className='card';
    el.innerText=`${r.aluno} - ${r.score}`;
    div.appendChild(el);
   });
-
-  if(dados.length>0){
-   let media=total/dados.length;
-   let m=document.createElement('div');
-   m.className='card';
-   m.innerText='Média geral: '+media.toFixed(2);
-   div.appendChild(m);
-  }
  });
 }
 
-// PWA
+// PWA SIMPLES
 if('serviceWorker' in navigator){
  const code=`self.addEventListener('fetch',e=>{});`;
  const blob=new Blob([code],{type:'text/javascript'});
