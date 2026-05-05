@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema Educativo Offline</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin:0; background:#f4f4f4; }
+    header { background:#2c3e50; color:white; padding:1rem; text-align:center; }
+    nav { display:flex; justify-content:space-around; background:#34495e; }
+    nav button { flex:1; padding:1rem; border:none; background:none; color:white; cursor:pointer; }
+    nav button:hover { background:#2c3e50; }
+    .container { padding:1rem; }
+    .hidden { display:none; }
+    .card { background:white; padding:1rem; margin:1rem 0; border-radius:8px; }
+    button { padding:0.5rem 1rem; margin-top:0.5rem; }
+    video, iframe { width:100%; max-height:300px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Sistema Educativo Offline</h1>
+</header>
+
+<nav>
+  <button onclick="showSection('biblioteca')">Biblioteca</button>
+  <button onclick="showSection('aulas')">Aulas</button>
+  <button onclick="showSection('quiz')">Exercícios</button>
+</nav>
+
+<div class="container">
+
+  <!-- Biblioteca -->
+  <div id="biblioteca" class="section">
+    <h2>Biblioteca</h2>
+    <div class="card">
+      <h3>PDF Exemplo</h3>
+      <iframe src="assets/exemplo.pdf"></iframe>
+    </div>
+    <div class="card">
+      <h3>Vídeo Aula</h3>
+      <video controls>
+        <source src="assets/video.mp4" type="video/mp4">
+      </video>
+    </div>
+  </div>
+
+  <!-- Aulas -->
+  <div id="aulas" class="section hidden">
+    <h2>Aulas</h2>
+    <div class="card">
+      <h3>Matemática - Aula 1</h3>
+      <p>Introdução aos números.</p>
+    </div>
+    <div class="card">
+      <h3>Português - Aula 1</h3>
+      <p>Leitura e interpretação.</p>
+    </div>
+  </div>
+
+  <!-- Quiz -->
+  <div id="quiz" class="section hidden">
+    <h2>Exercícios</h2>
+    <div class="card" id="quizBox">
+      <p id="question"></p>
+      <div id="answers"></div>
+      <p id="result"></p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+// Quiz simples
+const quiz = [
+  {
+    q: "Quanto é 2 + 2?",
+    a: ["3", "4", "5"],
+    correct: 1
+  },
+  {
+    q: "O céu é azul?",
+    a: ["Verdadeiro", "Falso"],
+    correct: 0
+  }
+];
+
+let current = 0;
+let score = 0;
+
+function loadQuestion() {
+  const q = quiz[current];
+  document.getElementById('question').innerText = q.q;
+  const answersDiv = document.getElementById('answers');
+  answersDiv.innerHTML = "";
+
+  q.a.forEach((ans, i) => {
+    const btn = document.createElement('button');
+    btn.innerText = ans;
+    btn.onclick = () => checkAnswer(i);
+    answersDiv.appendChild(btn);
+  });
+}
+
+function checkAnswer(i) {
+  if (i === quiz[current].correct) score++;
+  current++;
+
+  if (current < quiz.length) {
+    loadQuestion();
+  } else {
+    document.getElementById('quizBox').innerHTML = `<h3>Resultado: ${score}/${quiz.length}</h3>`;
+    localStorage.setItem('score', score);
+  }
+}
+
+loadQuestion();
+
+// Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+
+</body>
+</html>
+
+<!-- Service Worker file (sw.js) -->
+<script id="sw" type="javascript/worker">
+const cacheName = 'edu-offline-v1';
+const filesToCache = [
+  '/',
+  'index.html'
+];
+
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(cacheName).then(cache => cache.addAll(filesToCache))
+  );
+});
+
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(response => response || fetch(e.request))
+  );
+});
+</script>
