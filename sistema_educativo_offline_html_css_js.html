@@ -3,19 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Plataforma Escolar PRO</title>
+<title>Escola PRO - Sistema com Acessos</title>
 
 <style>
-body{margin:0;font-family:Arial;background:#0f172a;color:#fff}
+body{margin:0;font-family:Arial;background:#0f172a;color:white}
 header{background:#111827;padding:15px;text-align:center}
+
 .container{display:flex;height:100vh}
+
+/* LOGIN */
+.loginBox{
+max-width:400px;
+margin:80px auto;
+background:#1e293b;
+padding:20px;
+border-radius:10px;
+}
 
 /* SIDEBAR */
 .sidebar{
 width:240px;
 background:#1e293b;
 padding:10px;
+display:none;
 }
+
 .sidebar button{
 width:100%;
 padding:10px;
@@ -31,6 +43,7 @@ cursor:pointer;
 flex:1;
 padding:20px;
 overflow:auto;
+display:none;
 }
 
 .card{
@@ -46,7 +59,7 @@ padding:10px;
 margin:5px 0;
 }
 
-button.action{
+button{
 padding:10px;
 background:#3b82f6;
 border:none;
@@ -63,77 +76,55 @@ width:100%;
 <body>
 
 <header>
-<h1>🏫 Plataforma Escolar PRO (Offline Demo)</h1>
+<h1>🏫 Escola PRO - Sistema com Perfis</h1>
 </header>
 
+<!-- LOGIN -->
+<div id="loginScreen" class="loginBox">
+<h2>🔐 Login Obrigatório</h2>
+
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Senha">
+
+<select id="role">
+<option value="aluno">Aluno</option>
+<option value="professor">Professor</option>
+<option value="admin">Admin</option>
+</select>
+
+<button onclick="login()">Entrar</button>
+
+<p id="msg"></p>
+</div>
+
+<!-- SISTEMA -->
 <div class="container">
 
 <!-- SIDEBAR -->
-<div class="sidebar">
-<button onclick="show('login')">🔐 Login</button>
-<button onclick="show('dashboard')">📊 Dashboard</button>
-<button onclick="show('escolas')">🏫 Escolas</button>
-<button onclick="show('alunos')">👨‍🎓 Alunos</button>
-<button onclick="show('professores')">👨‍🏫 Professores</button>
-<button onclick="show('disciplinas')">📚 Disciplinas</button>
-<button onclick="show('quiz')">📝 Exercícios</button>
+<div class="sidebar" id="sidebar">
+
+<button onclick="showPanel('dashboard')">📊 Dashboard</button>
+<button onclick="showPanel('disciplinas')">📚 Disciplinas</button>
+<button onclick="showPanel('quiz')">📝 Exercícios</button>
+<button onclick="showPanel('admin')">🛠 Admin</button>
+
 </div>
 
 <!-- MAIN -->
-<div class="main">
-
-<!-- LOGIN -->
-<section id="login">
-<h2>Login (simulado)</h2>
-<input id="email" placeholder="email">
-<input id="pass" placeholder="senha" type="password">
-<select id="role">
-<option>Aluno</option>
-<option>Professor</option>
-<option>Admin</option>
-</select>
-<button class="action" onclick="login()">Entrar</button>
-<p id="log"></p>
-</section>
+<div class="main" id="main">
 
 <!-- DASHBOARD -->
-<section id="dashboard" class="hidden">
-<h2>📊 Dashboard</h2>
-<div class="card" id="stats"></div>
-</section>
-
-<!-- ESCOLAS -->
-<section id="escolas" class="hidden">
-<h2>🏫 Escolas</h2>
-<input id="schoolName" placeholder="Nome da escola">
-<button class="action" onclick="addSchool()">Adicionar</button>
-<div id="schoolList"></div>
-</section>
-
-<!-- ALUNOS -->
-<section id="alunos" class="hidden">
-<h2>👨‍🎓 Alunos</h2>
-<input id="studentName" placeholder="Nome do aluno">
-<select id="studentSchool"></select>
-<button class="action" onclick="addStudent()">Adicionar aluno</button>
-<div id="students"></div>
-</section>
-
-<!-- PROFESSORES -->
-<section id="professores" class="hidden">
-<h2>👨‍🏫 Professores</h2>
-<input id="teacherName" placeholder="Nome do professor">
-<select id="teacherSchool"></select>
-<button class="action" onclick="addTeacher()">Adicionar</button>
-<div id="teachers"></div>
+<section id="dashboard">
+<h2>📊 Painel</h2>
+<div class="card" id="info"></div>
 </section>
 
 <!-- DISCIPLINAS -->
 <section id="disciplinas" class="hidden">
 <h2>📚 Disciplinas</h2>
-<input id="subject" placeholder="Disciplina">
-<button class="action" onclick="addSubject()">Adicionar</button>
-<div id="subjects"></div>
+<input id="disc" placeholder="Nova disciplina">
+<button onclick="addDisc()">Adicionar</button>
+<div id="listDisc"></div>
 </section>
 
 <!-- QUIZ -->
@@ -142,126 +133,143 @@ width:100%;
 <div id="quizBox"></div>
 </section>
 
+<!-- ADMIN -->
+<section id="admin" class="hidden">
+<h2>🛠 Admin Panel</h2>
+<div class="card" id="adminPanel"></div>
+</section>
+
 </div>
 </div>
 
 <script>
- 
-let db = {
-schools:[],
-students:[],
-teachers:[],
-subjects:[],
-results:[]
-};
 
-function show(id){
-document.querySelectorAll('section').forEach(s=>s.classList.add('hidden'));
-document.getElementById(id).classList.remove('hidden');
-updateAll();
-}
+/* =========================
+   USUÁRIOS (SIMULAÇÃO)
+========================= */
 
-let user=null;
+const users = [
+{email:"aluno@escola.com",password:"1234",role:"aluno"},
+{email:"prof@escola.com",password:"1234",role:"professor"},
+{email:"admin@escola.com",password:"1234",role:"admin"}
+];
+
+let currentUser=null;
+
+/* =========================
+   LOGIN OBRIGATÓRIO
+========================= */
 
 function login(){
+
 let email=document.getElementById("email").value;
+let password=document.getElementById("password").value;
 let role=document.getElementById("role").value;
 
-user={email,role};
+let user = users.find(u=>u.email===email && u.password===password && u.role===role);
 
-document.getElementById("log").innerText=
-"Logado como "+role;
+if(!user){
+document.getElementById("msg").innerText="❌ Login inválido";
+return;
+}
+
+currentUser=user;
+
+/* mostra sistema */
+document.getElementById("loginScreen").style.display="none";
+document.getElementById("sidebar").style.display="block";
+document.getElementById("main").style.display="block";
+
+loadDashboard();
+}
+
+/* =========================
+   CONTROLO DE ACESSO
+========================= */
+
+function showPanel(panel){
+
+if(!currentUser) return;
+
+if(panel==="admin" && currentUser.role!=="admin"){
+alert("Acesso negado!");
+return;
+}
+
+document.querySelectorAll("section").forEach(s=>s.classList.add("hidden"));
+document.getElementById(panel).classList.remove("hidden");
 
 }
 
-function addSchool(){
-let name=document.getElementById("schoolName").value;
+/* =========================
+   DASHBOARD
+========================= */
 
-db.schools.push({id:Date.now(),name});
+function loadDashboard(){
 
-updateAll();
+let role=currentUser.role;
+
+document.getElementById("info").innerHTML=`
+👤 Utilizador: ${currentUser.email}<br>
+🔐 Tipo: ${role}<br>
+🏫 Sistema ativo offline
+`;
+
+/* permissões visuais */
+if(role==="admin"){
+document.getElementById("adminPanel").innerHTML=
+"✔ Acesso total ao sistema";
 }
 
-function renderSchools(){
-let div=document.getElementById("schoolList");
+}
+
+/* =========================
+   DISCIPLINAS
+========================= */
+
+let disciplines=[];
+
+function addDisc(){
+
+if(currentUser.role==="aluno"){
+alert("Sem permissão");
+return;
+}
+
+let d=document.getElementById("disc").value;
+disciplines.push(d);
+
+renderDisc();
+}
+
+function renderDisc(){
+
+let div=document.getElementById("listDisc");
 div.innerHTML="";
 
-db.schools.forEach(s=>{
+disciplines.forEach(d=>{
 div.innerHTML+=`
-<div class="card">🏫 ${s.name}</div>`;
+<div class="card">📚 ${d}</div>`;
 });
+
 }
 
-function addStudent(){
-let name=document.getElementById("studentName").value;
-let school=document.getElementById("studentSchool").value;
-
-db.students.push({name,school});
-
-updateAll();
-}
-
-function renderStudents(){
-let div=document.getElementById("students");
-div.innerHTML="";
-
-db.students.forEach(s=>{
-div.innerHTML+=`
-<div class="card">👨‍🎓 ${s.name} (${s.school})</div>`;
-});
-}
-
-function addTeacher(){
-let name=document.getElementById("teacherName").value;
-let school=document.getElementById("teacherSchool").value;
-
-db.teachers.push({name,school});
-
-updateAll();
-}
-
-function renderTeachers(){
-let div=document.getElementById("teachers");
-div.innerHTML="";
-
-db.teachers.forEach(t=>{
-div.innerHTML+=`
-<div class="card">👨‍🏫 ${t.name} (${t.school})</div>`;
-});
-}
-
-function addSubject(){
-let s=document.getElementById("subject").value;
-
-db.subjects.push(s);
-
-updateAll();
-}
-
-function renderSubjects(){
-let div=document.getElementById("subjects");
-div.innerHTML="";
-
-db.subjects.forEach(s=>{
-div.innerHTML+=`
-<div class="card">📚 ${s}</div>`;
-});
-}
+/* =========================
+   QUIZ
+========================= */
 
 let quiz=[
-{q:"2+2?",a:["3","4"],c:1},
-{q:"Capital da Guiné-Bissau?",a:["Bissau","Bafatá"],c:0}
+{q:"2+2?",a:["3","4"],c:1}
 ];
 
 let i=0,score=0;
 
 function loadQuiz(){
+
 let box=document.getElementById("quizBox");
 
 if(i>=quiz.length){
-db.results.push(score);
-
-box.innerHTML="<h3>Resultado: "+score+"</h3>";
+box.innerHTML="✔ Resultado: "+score;
 return;
 }
 
@@ -273,6 +281,7 @@ q.a.forEach((a,idx)=>{
 box.innerHTML+=`
 <button onclick="answer(${idx})">${a}</button><br>`;
 });
+
 }
 
 function answer(idx){
@@ -281,26 +290,7 @@ i++;
 loadQuiz();
 }
 
-function renderDashboard(){
-document.getElementById("stats").innerHTML=`
-🏫 Escolas: ${db.schools.length}<br>
-👨‍🎓 Alunos: ${db.students.length}<br>
-👨‍🏫 Professores: ${db.teachers.length}<br>
-📚 Disciplinas: ${db.subjects.length}<br>
-📝 Resultados: ${db.results.length}
-`;
-}
-
-function updateAll(){
-renderSchools();
-renderStudents();
-renderTeachers();
-renderSubjects();
-renderDashboard();
-}
-
 loadQuiz();
-updateAll();
 
 </script>
 
