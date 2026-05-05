@@ -3,197 +3,304 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Escola Offline PRO + Professor</title>
+<title>Plataforma Escolar PRO</title>
 
 <style>
-body{margin:0;font-family:Arial;background:#f1f3f6}
-header{background:#111827;color:#fff;padding:15px;text-align:center}
+body{margin:0;font-family:Arial;background:#0f172a;color:#fff}
+header{background:#111827;padding:15px;text-align:center}
 .container{display:flex;height:100vh}
-.sidebar{width:240px;background:#1f2937;color:white;padding:10px}
-.sidebar button{width:100%;padding:10px;margin:5px 0;border:none;background:#374151;color:white;cursor:pointer}
-.main{flex:1;padding:20px;overflow:auto}
-.card{background:white;padding:15px;margin:10px 0;border-radius:10px}
+
+/* SIDEBAR */
+.sidebar{
+width:240px;
+background:#1e293b;
+padding:10px;
+}
+.sidebar button{
+width:100%;
+padding:10px;
+margin:5px 0;
+border:none;
+background:#334155;
+color:white;
+cursor:pointer;
+}
+
+/* MAIN */
+.main{
+flex:1;
+padding:20px;
+overflow:auto;
+}
+
+.card{
+background:#1f2937;
+padding:15px;
+margin:10px 0;
+border-radius:10px;
+}
+
+input,select{
+width:100%;
+padding:10px;
+margin:5px 0;
+}
+
+button.action{
+padding:10px;
+background:#3b82f6;
+border:none;
+color:white;
+cursor:pointer;
+width:100%;
+}
+
 .hidden{display:none}
-input{padding:10px;width:100%;margin:5px 0}
-button.action{background:#2563eb;color:white;border:none;padding:10px}
 </style>
+
 </head>
+
 <body>
 
-<header><h1>📚 Escola Offline PRO</h1></header>
+<header>
+<h1>🏫 Plataforma Escolar PRO (Offline Demo)</h1>
+</header>
 
 <div class="container">
+
+<!-- SIDEBAR -->
 <div class="sidebar">
-<button onclick="show('loginAluno')">👨‍🎓 Aluno</button>
-<button onclick="show('loginProf')">👨‍🏫 Professor</button>
-<button onclick="show('disciplinas')">📘 Disciplinas</button>
+<button onclick="show('login')">🔐 Login</button>
+<button onclick="show('dashboard')">📊 Dashboard</button>
+<button onclick="show('escolas')">🏫 Escolas</button>
+<button onclick="show('alunos')">👨‍🎓 Alunos</button>
+<button onclick="show('professores')">👨‍🏫 Professores</button>
+<button onclick="show('disciplinas')">📚 Disciplinas</button>
 <button onclick="show('quiz')">📝 Exercícios</button>
-<button onclick="show('painelProf')">📊 Painel Professor</button>
 </div>
 
+<!-- MAIN -->
 <div class="main">
 
-<section id="loginAluno">
-<h2>Login Aluno</h2>
-<input id="nomeAluno" placeholder="Nome do aluno">
-<button class="action" onclick="loginAluno()">Entrar</button>
-<p id="userAluno"></p>
+<!-- LOGIN -->
+<section id="login">
+<h2>Login (simulado)</h2>
+<input id="email" placeholder="email">
+<input id="pass" placeholder="senha" type="password">
+<select id="role">
+<option>Aluno</option>
+<option>Professor</option>
+<option>Admin</option>
+</select>
+<button class="action" onclick="login()">Entrar</button>
+<p id="log"></p>
 </section>
 
-<section id="loginProf" class="hidden">
-<h2>Login Professor</h2>
-<input id="senhaProf" placeholder="Senha">
-<button class="action" onclick="loginProf()">Entrar</button>
-<p id="statusProf"></p>
+<!-- DASHBOARD -->
+<section id="dashboard" class="hidden">
+<h2>📊 Dashboard</h2>
+<div class="card" id="stats"></div>
 </section>
 
+<!-- ESCOLAS -->
+<section id="escolas" class="hidden">
+<h2>🏫 Escolas</h2>
+<input id="schoolName" placeholder="Nome da escola">
+<button class="action" onclick="addSchool()">Adicionar</button>
+<div id="schoolList"></div>
+</section>
+
+<!-- ALUNOS -->
+<section id="alunos" class="hidden">
+<h2>👨‍🎓 Alunos</h2>
+<input id="studentName" placeholder="Nome do aluno">
+<select id="studentSchool"></select>
+<button class="action" onclick="addStudent()">Adicionar aluno</button>
+<div id="students"></div>
+</section>
+
+<!-- PROFESSORES -->
+<section id="professores" class="hidden">
+<h2>👨‍🏫 Professores</h2>
+<input id="teacherName" placeholder="Nome do professor">
+<select id="teacherSchool"></select>
+<button class="action" onclick="addTeacher()">Adicionar</button>
+<div id="teachers"></div>
+</section>
+
+<!-- DISCIPLINAS -->
 <section id="disciplinas" class="hidden">
-<h2>Disciplinas</h2>
-<div id="listaDisciplinas"></div>
-<div id="listaAulas"></div>
+<h2>📚 Disciplinas</h2>
+<input id="subject" placeholder="Disciplina">
+<button class="action" onclick="addSubject()">Adicionar</button>
+<div id="subjects"></div>
 </section>
 
+<!-- QUIZ -->
 <section id="quiz" class="hidden">
-<h2>Exercícios</h2>
+<h2>📝 Exercícios</h2>
 <div id="quizBox"></div>
-</section>
-
-<section id="painelProf" class="hidden">
-<h2>Painel do Professor</h2>
-<div id="relatorio"></div>
 </section>
 
 </div>
 </div>
 
 <script>
-// NAV
+ 
+let db = {
+schools:[],
+students:[],
+teachers:[],
+subjects:[],
+results:[]
+};
+
 function show(id){
- document.querySelectorAll('section').forEach(s=>s.classList.add('hidden'));
- document.getElementById(id).classList.remove('hidden');
+document.querySelectorAll('section').forEach(s=>s.classList.add('hidden'));
+document.getElementById(id).classList.remove('hidden');
+updateAll();
 }
 
-// DB
-let db;
-const req=indexedDB.open('EscolaPRO',1);
-req.onupgradeneeded=e=>{
- db=e.target.result;
- db.createObjectStore('alunos',{keyPath:'id',autoIncrement:true});
- db.createObjectStore('resultados',{keyPath:'id',autoIncrement:true});
-};
-req.onsuccess=e=>db=e.target.result;
+let user=null;
 
-function salvarAluno(nome){
- db.transaction('alunos','readwrite').objectStore('alunos').add({nome});
+function login(){
+let email=document.getElementById("email").value;
+let role=document.getElementById("role").value;
+
+user={email,role};
+
+document.getElementById("log").innerText=
+"Logado como "+role;
+
 }
 
-function salvarResultado(r){
- db.transaction('resultados','readwrite').objectStore('resultados').add(r);
+function addSchool(){
+let name=document.getElementById("schoolName").value;
+
+db.schools.push({id:Date.now(),name});
+
+updateAll();
 }
 
-function listarResultados(cb){
- let r=db.transaction('resultados').objectStore('resultados').getAll();
- r.onsuccess=()=>cb(r.result);
+function renderSchools(){
+let div=document.getElementById("schoolList");
+div.innerHTML="";
+
+db.schools.forEach(s=>{
+div.innerHTML+=`
+<div class="card">🏫 ${s.name}</div>`;
+});
 }
 
-// LOGIN ALUNO
-let alunoAtual=null;
-function loginAluno(){
- let nome=document.getElementById('nomeAluno').value;
- alunoAtual=nome;
- salvarAluno(nome);
- document.getElementById('userAluno').innerText='Aluno: '+nome;
+function addStudent(){
+let name=document.getElementById("studentName").value;
+let school=document.getElementById("studentSchool").value;
+
+db.students.push({name,school});
+
+updateAll();
 }
 
-// LOGIN PROFESSOR
-let profLogado=false;
-function loginProf(){
- let senha=document.getElementById('senhaProf').value;
- if(senha==='1234'){
-  profLogado=true;
-  document.getElementById('statusProf').innerText='Acesso permitido';
-  show('painelProf');
-  gerarRelatorio();
- }else{
-  document.getElementById('statusProf').innerText='Senha incorreta';
- }
+function renderStudents(){
+let div=document.getElementById("students");
+div.innerHTML="";
+
+db.students.forEach(s=>{
+div.innerHTML+=`
+<div class="card">👨‍🎓 ${s.name} (${s.school})</div>`;
+});
 }
 
-// DISCIPLINAS
-const dados={
- Matemática:['Soma','Subtração','Multiplicação'],
- Português:['Leitura','Gramática']
-};
+function addTeacher(){
+let name=document.getElementById("teacherName").value;
+let school=document.getElementById("teacherSchool").value;
 
-function carregarDisciplinas(){
- let d=document.getElementById('listaDisciplinas');
- d.innerHTML='';
- Object.keys(dados).forEach(nome=>{
-  let b=document.createElement('button');
-  b.innerText=nome;
-  b.onclick=()=>mostrarAulas(nome);
-  d.appendChild(b);
- });
+db.teachers.push({name,school});
+
+updateAll();
 }
 
-function mostrarAulas(nome){
- let div=document.getElementById('listaAulas');
- div.innerHTML='';
- dados[nome].forEach(a=>{
-  let el=document.createElement('div');
-  el.className='card';
-  el.innerText=a;
-  div.appendChild(el);
- });
-}
-carregarDisciplinas();
+function renderTeachers(){
+let div=document.getElementById("teachers");
+div.innerHTML="";
 
-// QUIZ
-const quiz=[
- {q:'2+2?',a:['3','4'],c:1},
- {q:'5x2?',a:['10','8'],c:0},
- {q:'Capital?',a:['Bissau','Dakar'],c:0}
+db.teachers.forEach(t=>{
+div.innerHTML+=`
+<div class="card">👨‍🏫 ${t.name} (${t.school})</div>`;
+});
+}
+
+function addSubject(){
+let s=document.getElementById("subject").value;
+
+db.subjects.push(s);
+
+updateAll();
+}
+
+function renderSubjects(){
+let div=document.getElementById("subjects");
+div.innerHTML="";
+
+db.subjects.forEach(s=>{
+div.innerHTML+=`
+<div class="card">📚 ${s}</div>`;
+});
+}
+
+let quiz=[
+{q:"2+2?",a:["3","4"],c:1},
+{q:"Capital da Guiné-Bissau?",a:["Bissau","Bafatá"],c:0}
 ];
 
 let i=0,score=0;
+
 function loadQuiz(){
- let box=document.getElementById('quizBox');
- if(i>=quiz.length){
-  salvarResultado({aluno:alunoAtual,score});
-  box.innerHTML=`<h3>Pontuação: ${score}</h3>`;
-  return;
- }
- let q=quiz[i];
- box.innerHTML=`<p>${q.q}</p>`;
- q.a.forEach((opt,idx)=>{
-  let b=document.createElement('button');
-  b.innerText=opt;
-  b.onclick=()=>{ if(idx==q.c) score++; i++; loadQuiz(); };
-  box.appendChild(b);
- });
+let box=document.getElementById("quizBox");
+
+if(i>=quiz.length){
+db.results.push(score);
+
+box.innerHTML="<h3>Resultado: "+score+"</h3>";
+return;
 }
+
+let q=quiz[i];
+
+box.innerHTML="<p>"+q.q+"</p>";
+
+q.a.forEach((a,idx)=>{
+box.innerHTML+=`
+<button onclick="answer(${idx})">${a}</button><br>`;
+});
+}
+
+function answer(idx){
+if(idx==quiz[i].c) score++;
+i++;
 loadQuiz();
-
-// RELATÓRIO PROFESSOR
-function gerarRelatorio(){
- listarResultados(dados=>{
-  let div=document.getElementById('relatorio');
-  div.innerHTML='';
-  dados.forEach(r=>{
-   let el=document.createElement('div');
-   el.className='card';
-   el.innerText=`${r.aluno} - ${r.score}`;
-   div.appendChild(el);
-  });
- });
 }
 
-// PWA SIMPLES
-if('serviceWorker' in navigator){
- const code=`self.addEventListener('fetch',e=>{});`;
- const blob=new Blob([code],{type:'text/javascript'});
- navigator.serviceWorker.register(URL.createObjectURL(blob));
+function renderDashboard(){
+document.getElementById("stats").innerHTML=`
+🏫 Escolas: ${db.schools.length}<br>
+👨‍🎓 Alunos: ${db.students.length}<br>
+👨‍🏫 Professores: ${db.teachers.length}<br>
+📚 Disciplinas: ${db.subjects.length}<br>
+📝 Resultados: ${db.results.length}
+`;
 }
+
+function updateAll(){
+renderSchools();
+renderStudents();
+renderTeachers();
+renderSubjects();
+renderDashboard();
+}
+
+loadQuiz();
+updateAll();
 
 </script>
 
